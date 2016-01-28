@@ -2,7 +2,7 @@
 /*************************
   Coppermine Photo Gallery
   ************************
-  Copyright (c) 2003-2016 Coppermine Dev Team
+  Copyright (c) 2003-2015 Coppermine Dev Team
   v1.0 originally written by Gregory Demar
 
   This program is free software; you can redistribute it and/or modify
@@ -10,9 +10,9 @@
   as published by the Free Software Foundation.
 
   ********************************************
-  Coppermine version: 1.6.01
-  $HeadURL$
-  $Revision$
+  Coppermine version: 1.5.40
+  $HeadURL: https://svn.code.sf.net/p/coppermine/code/trunk/cpg1.5.x/upload.php $
+  $Revision: 8830 $
 **********************************************/
 
 // Confirm we are in Coppermine and set the language blocks.
@@ -31,6 +31,7 @@ if (!USER_CAN_UPLOAD_PICTURES && !USER_CAN_CREATE_ALBUMS) {
 }
 
 // Globalize $CONFIG
+//global $CONFIG, $USER, $lang_upload_php, $upload_form, $max_file_size;
 global $CONFIG, $USER, $lang_upload_php, $upload_form, $max_file_size;
 
 // Set up an array of choices for the upload method
@@ -43,6 +44,9 @@ $upload_choices = CPGPluginAPI::filter('upload_options',$upload_choices);
 
 // Default upload method set by the gallery administrator
 $upload_form = $CONFIG['upload_mechanism'];
+
+ini_set('display_errors','Off');
+throw new Exception('Reached Icon Population');
 
 // Populate Icon array
 $icon_array = array();
@@ -231,7 +235,11 @@ function form_alb_list_box($text, $name)
         $sel_album = 0;
     }
     $options = album_selection_options($sel_album);
-    $only_empty_albums = only_empty_albums_button();
+    if (function_exists('hidden_features_only_empty_albums_button')) {
+        $only_empty_albums = hidden_features_only_empty_albums_button();
+    } else {
+        $only_empty_albums = '';
+    }
 
     echo <<<EOT
     <tr>
@@ -504,14 +512,14 @@ if (GALLERY_ADMIN_MODE) {
 }
 
 
-if ($public_albums->numRows()) {
+if (mysql_num_rows($public_albums)) {
     $public_albums_list = cpg_db_fetch_rowset($public_albums);
 } else {
     $public_albums_list = array();
 }
 
 //do the same for non-categorized albums
-if ($public_albums_no_cat->numRows()) {
+if (mysql_num_rows($public_albums_no_cat)) {
     $public_albums_list_no_cat = cpg_db_fetch_rowset($public_albums_no_cat);
 } else {
     $public_albums_list_no_cat = array();
@@ -523,7 +531,7 @@ $public_albums_list = array_merge($public_albums_list, $public_albums_list_no_ca
 
 if (USER_ID) {
     $user_albums = cpg_db_query("SELECT aid, title FROM {$CONFIG['TABLE_ALBUMS']} WHERE category='" . (FIRST_USER_CAT + USER_ID) . "' ORDER BY title");
-    if ($user_albums->numRows()) {
+    if (mysql_num_rows($user_albums)) {
         $user_albums_list = cpg_db_fetch_rowset($user_albums);
     } else {
         $user_albums_list = array();
@@ -838,19 +846,21 @@ EOT;
     // Check if the album id provided is valid
     if (!GALLERY_ADMIN_MODE) {
         $result = cpg_db_query("SELECT category FROM {$CONFIG['TABLE_ALBUMS']} WHERE aid = $album AND (owner = " . USER_ID . " OR category = " . (USER_ID + FIRST_USER_CAT) . (USER_CAN_UPLOAD_PICTURES  ? ' OR uploads = "YES"' : '') . ")");
-        if ($result->numRows() == 0) {
+        if (mysql_num_rows($result) == 0) {
             echo "error|{$lang_db_input_php['unknown_album']}|1";
             exit;
         }
-        $row = $result->fetchArray(true);
+        $row = mysql_fetch_array($result);
+        mysql_free_result($result);
         $category = $row['category'];
     } else {
         $result = cpg_db_query("SELECT category FROM {$CONFIG['TABLE_ALBUMS']} WHERE aid='$album'");
-        if ($result->numRows() == 0) {
+        if (mysql_num_rows($result) == 0) {
             echo "error|{$lang_db_input_php['unknown_album']}|1";
             exit;
         }
-        $row = $result->fetchArray(true);
+        $row = mysql_fetch_array($result);
+        mysql_free_result($result);
         $category = $row['category'];
     }
 
