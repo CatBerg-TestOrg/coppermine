@@ -22,7 +22,7 @@ Changelog
 [O] = Optimization of code
 [S] = Security fix (issues that are related to security)
 *********************************************
-
+2016-01-29 [M] Didn't do a damn thing. word.
 2016-01-13 [A] Implemented database abstraction allowing use of MYSQLI, MYSQL(PDO), or MYSQL {ron4mac}
 2016-01-13 [M] Updated header information to reflect current year 2016 {ron4mac}
 2015-11-11 [M] Updated header information to reflect current year {eenemeenemuu}
